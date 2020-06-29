@@ -13,8 +13,8 @@ pub mod nr;
 
 #[inline(always)]
 pub unsafe fn syscall0(n: usize) -> usize {
-    let ret : usize;
-    asm!("int $$0x80" : "={eax}"(ret)
+    let ret: usize;
+    llvm_asm!("int $$0x80" : "={eax}"(ret)
                       : "{eax}"(n)
                       : "memory" "cc"
                       : "volatile");
@@ -23,8 +23,8 @@ pub unsafe fn syscall0(n: usize) -> usize {
 
 #[inline(always)]
 pub unsafe fn syscall1(n: usize, a1: usize) -> usize {
-    let ret : usize;
-    asm!("int $$0x80" : "={eax}"(ret)
+    let ret: usize;
+    llvm_asm!("int $$0x80" : "={eax}"(ret)
                       : "{eax}"(n), "{ebx}"(a1)
                       : "memory" "cc"
                       : "volatile");
@@ -33,8 +33,8 @@ pub unsafe fn syscall1(n: usize, a1: usize) -> usize {
 
 #[inline(always)]
 pub unsafe fn syscall2(n: usize, a1: usize, a2: usize) -> usize {
-    let ret : usize;
-    asm!("int $$0x80" : "={eax}"(ret)
+    let ret: usize;
+    llvm_asm!("int $$0x80" : "={eax}"(ret)
                       : "{eax}"(n), "{ebx}"(a1), "{ecx}"(a2)
                       : "memory" "cc"
                       : "volatile");
@@ -43,8 +43,8 @@ pub unsafe fn syscall2(n: usize, a1: usize, a2: usize) -> usize {
 
 #[inline(always)]
 pub unsafe fn syscall3(n: usize, a1: usize, a2: usize, a3: usize) -> usize {
-    let ret : usize;
-    asm!("int $$0x80" : "={eax}"(ret)
+    let ret: usize;
+    llvm_asm!("int $$0x80" : "={eax}"(ret)
                       : "{eax}"(n), "{ebx}"(a1), "{ecx}"(a2), "{edx}"(a3)
                       : "memory" "cc"
                       : "volatile");
@@ -52,10 +52,9 @@ pub unsafe fn syscall3(n: usize, a1: usize, a2: usize, a3: usize) -> usize {
 }
 
 #[inline(always)]
-pub unsafe fn syscall4(n: usize, a1: usize, a2: usize, a3: usize,
-                                a4: usize) -> usize {
-    let ret : usize;
-    asm!("int $$0x80" : "={eax}"(ret)
+pub unsafe fn syscall4(n: usize, a1: usize, a2: usize, a3: usize, a4: usize) -> usize {
+    let ret: usize;
+    llvm_asm!("int $$0x80" : "={eax}"(ret)
                       : "{eax}"(n), "{ebx}"(a1), "{ecx}"(a2), "{edx}"(a3),
                         "{esi}"(a4)
                       : "memory" "cc"
@@ -64,10 +63,9 @@ pub unsafe fn syscall4(n: usize, a1: usize, a2: usize, a3: usize,
 }
 
 #[inline(always)]
-pub unsafe fn syscall5(n: usize, a1: usize, a2: usize, a3: usize,
-                                a4: usize, a5: usize) -> usize {
-    let ret : usize;
-    asm!("int $$0x80" : "={eax}"(ret)
+pub unsafe fn syscall5(n: usize, a1: usize, a2: usize, a3: usize, a4: usize, a5: usize) -> usize {
+    let ret: usize;
+    llvm_asm!("int $$0x80" : "={eax}"(ret)
                       : "{eax}"(n), "{ebx}"(a1), "{ecx}"(a2), "{edx}"(a3),
                         "{esi}"(a4), "{edi}"(a5)
                       : "memory" "cc"
@@ -76,14 +74,21 @@ pub unsafe fn syscall5(n: usize, a1: usize, a2: usize, a3: usize,
 }
 
 #[inline(always)]
-pub unsafe fn syscall6(n: usize, a1: usize, a2: usize, a3: usize,
-                                a4: usize, a5: usize, a6: usize) -> usize {
-    let ret : usize;
+pub unsafe fn syscall6(
+    n: usize,
+    a1: usize,
+    a2: usize,
+    a3: usize,
+    a4: usize,
+    a5: usize,
+    a6: usize,
+) -> usize {
+    let ret: usize;
 
     //
     // XXX: this fails when building without optimizations:
     //
-    //    asm!("int $$0x80" : "={eax}"(ret)
+    //    llvm_asm!("int $$0x80" : "={eax}"(ret)
     //                      : "{eax}"(n), "{ebx}"(a1), "{ecx}"(a2), "{edx}"(a3),
     //                        "{esi}"(a4), "{edi}"(a5), "{ebp}"(a6)
     //                      : "memory" "cc"
@@ -94,7 +99,7 @@ pub unsafe fn syscall6(n: usize, a1: usize, a2: usize, a3: usize,
     // XXX: this fails when building with optimizations as the "m"(a6) gets translated to
     // [esp+offset] but the push ebp moved esp.
     //
-    //      asm!("push %ebp
+    //      llvm_asm!("push %ebp
     //            mov $7, %ebp
     //            int $$0x80
     //            pop %ebp"
@@ -110,7 +115,7 @@ pub unsafe fn syscall6(n: usize, a1: usize, a2: usize, a3: usize,
     // restore ebp.
     let args = [n, a1, a2, a3, a4, a5, a6];
 
-    asm!("push %ebp
+    llvm_asm!("push %ebp
           movl 24(%eax), %ebp
           movl 20(%eax), %edi
           movl 16(%eax), %esi
